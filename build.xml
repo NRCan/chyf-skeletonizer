@@ -1,0 +1,218 @@
+<project name="skeletonizer" default="test" basedir=".">
+    <description>
+Simple build file, for namematcher and other refractions projects. You will need ant.jar and junit.jar in your classpath in order to use this file.
+	
+Target directory structure:
+* bin/ - common binaries, scripts (place on path)
+* src/ - source goes in under this tree in a heirarchy which matches the package names
+* doc/ - Hand crafted documentation
+* doc/javadoc/ - generated javadoc code (which your docs can link to)
+* lib/ - imported Java libraries go in to this directory
+* build/classes/ - This is the tree for building; Ant creates it and can empty it in the 'clean' project.
+* build/tests/ - junit test cases are compiled in separate subdirectory
+* build/logs - logs for cruisecontrol go here
+* build/resutls - xml test results for cruisecontrol go here
+* build/dist/ - Distribution outputs go in here; the directory is created in Ant and clean empties it out
+* build/dist/lib/ - required runtime jars go here, including generated timestamped jar	
+* dist/ - zipped distribution archives go here
+* build.xml - this file
+    </description>
+    
+	<!-- GLOBAL PROPERTIES -->
+	<property name="build.compiler.emacs" value="true"/>
+	<property name="cvs.repository" value=":pserver:${user.name}@Lion:/raid/home/pserver" /> 
+    <property name="cvs.package"    value="skeletonizer" /> 
+  
+	<!-- project directories -->
+	<property name="major"      value="1"/>
+	<property name="minor"      value="0"/>		
+    <property name="patch"      value="0"/>
+	<property name="version"    value="${major}.${minor}.${patch}"/>
+	<property name="src"        location="src"/>
+	<property name="buildroot"  location="build"/>
+	<property name="build"      location="${buildroot}/classes"/>
+	<property name="testbuild"  location="${buildroot}/tests"/>  
+	<property name="distbuild"  location="${buildroot}/dist/skeletonizer-${version}"/>  	
+	<property name="dist"       location="dist"/>
+	<property name="lib"        location="lib"/>
+	<property name="test"       location="test"/>
+	<property name="doc"        location="doc"/>
+	<property name="javadoc"    location="${doc}/javadoc"/>
+	<property name="bin"        location="bin"/>
+	<property name="results"    location="${buildroot}/results"/>	
+	<property name="logs"       location="${buildroot}/logs"/>
+	
+	<!-- paths -->
+	<path id="buildpath" >
+		<fileset dir="lib">
+			<include name="*.jar"/>
+		</fileset>
+	</path>	
+	<path id="distpath" >
+		<fileset dir="lib">
+        	<include name="*.jar"/>
+	        <exclude name="junit*.jar"/>
+	        <exclude name="ant*.jar"/>        
+		</fileset>
+	</path>
+	<path id="testpath" >	
+		<pathelement location="${build}" />
+		<pathelement location="${testbuild}" />
+		<fileset dir="lib">
+			<include name="*.jar"/>
+		</fileset>                
+	</path> 
+	  
+	<!-- TARGETS -->
+	<target name="init">
+		<tstamp/>
+		<!-- Create the build directory structure used by build -->
+		<mkdir dir="${buildroot}"/>
+		<mkdir dir="${build}"/>
+		<mkdir dir="${distbuild}"/>
+		<mkdir dir="${logs}"/>		
+		<mkdir dir="${dist}"/>		
+	</target>
+
+	<target name="clean"
+			description="clean out the output directories" >
+		<!-- Delete the ${buildroot} and ${dist} directory trees -->
+		<delete dir="${buildroot}"/>
+		<delete dir="${dist}"/>
+		<delete dir="${javadoc}"/>
+		<delete file="${release}.zip"/>
+	</target>
+
+	<target name="compile" depends="init"
+			description="compile application without cleaning">
+	    <javac srcdir="${src}"
+	           destdir="${build}"
+		   	   classpathref="buildpath"
+	   		   deprecation="on"
+	           debug="on"
+	           nowarn="off"/>
+		<copy todir="${build}">
+			<fileset dir="${src}">
+				<!-- don't copy java or javadoc support files -->
+				<exclude name="**/doc-files/*"/>
+				<exclude name="**/package.html"/>
+				<exclude name="**/*.java"/>							
+			</fileset>
+		</copy>	           
+	</target>	
+	
+	<target	name="docs" depends="compile"
+			description="generate javadocs" >			
+		<mkdir dir="${javadoc}"/>
+		<javadoc destdir="${javadoc}"
+		         author="true"
+		         version="true"
+		         use="true"
+		         windowtitle="${ant.project.name} API">
+			<fileset dir="src" defaultexcludes="yes"/>
+			<doctitle><![CDATA[<h1>${ant.project.name} API</h1>]]></doctitle>
+			<bottom><![CDATA[<i>Copyright &#169; 2003 Refractions Research. All Rights Reserved.</i>]]></bottom>
+			<tag name="todo" scope="all" description="To do:" />
+			<tag name="hack" scope="all" description="Hack:" />
+			<tag name="bug" scope="all"  description="Bug:" />	 	 
+		</javadoc>		
+	</target>
+
+	<target name="test.init">
+		<mkdir dir="${testbuild}"/>		
+		<mkdir dir="${results}"/>				
+	</target>
+
+	<target name="test.compile" depends="compile, test.init">        
+	    <javac srcdir="${test}"
+	           destdir="${testbuild}"
+		   	   classpathref="testpath"
+	   		   deprecation="on"
+	           debug="on"
+	           nowarn="off">
+	    </javac>
+	</target>
+	
+	<target name="test" depends="test.compile"
+			description="run the junit tests">			
+	    <junit 	printsummary="no"
+	    		showoutput="no"
+	    		filtertrace="on"
+				haltonfailure="yes">				
+			<classpath>
+				<pathelement location="${build}" />
+				<pathelement location="${testbuild}" />
+				<fileset dir="lib">
+					<include name="*.jar"/>
+				</fileset> 			    
+			</classpath>
+					
+			<formatter type="brief" usefile="false"/>
+			<formatter type="xml"/>			
+			<batchtest fork="yes" todir="${results}">
+				<fileset dir="${test}">
+				  <include name="**/*Test*.java"/>
+				  <exclude name="**/AllTests.java"/>
+				</fileset>
+			</batchtest>
+		</junit>		
+	</target>
+
+	<target name="release-init">
+		<mkdir dir="${dist}"/>
+		<mkdir dir="${distbuild}"/>		
+		<mkdir dir="${distbuild}/lib"/>
+	</target>
+	
+	<target name="jar" depends="compile,release-init">
+		<jar jarfile="${distbuild}/lib/${ant.project.name}.jar"
+			basedir="${build}"/>
+	    <jar jarfile="${distbuild}/lib/src-${DSTAMP}.jar"
+			basedir="${src}"/>
+	</target>
+    
+    <!-- Can probably optimize most of the release directory away -->
+	<target name="release" depends="release-init, jar, docs"
+    	    description="Generate the distribution" >    
+    	<copy todir="${distbuild}/doc">
+     		<fileset dir="${doc}"/>
+	    </copy>
+    	<!--copy todir="${distbuild}/bin">
+	    	<fileset dir="${bin}"/>
+	    </copy-->
+		<copy todir="${distbuild}">
+		  <fileset dir=".">
+		  	<include name="COPYING"/>
+		  	<include name="README"/>
+		  	<include name="jump-workbench-properties.xml"/>
+		  	<include name="skeletonizer_gui.bat"/>
+		  	<include name="skeletonizer_gui.sh"/>
+		  	<include name="skeletonizer.bat"/>
+		  	<include name="skeletonizer.sh"/>
+          </fileset>
+		</copy>
+	    <copy todir="${distbuild}/lib">
+	    	<fileset dir="${lib}">
+	    		<exclude name="ant*.jar"/>
+	    		<exclude name="junit*.jar"/>    		
+	    	</fileset>
+	    </copy>
+	    <zip destfile="${dist}/${ant.project.name}-${version}-${DSTAMP}.zip" basedir="${distbuild}/.." />
+	</target>
+
+	<target name="all" depends="clean,init,compile,test,jar"
+		    description="Build application" />
+		    
+	<target name="checkout"
+			description="Update package from CVS">
+			
+		<cvs cvsroot="${cvs.repository}" package="${cvs.package}" dest=".." />
+  	</target>
+  	
+	<target name="masterbuild" depends="checkout,compile,test,release"
+  	        description="Cruise control master build" /> 
+  	        
+	<target name="cleanbuild" depends="clean,masterbuild"
+  	      	description="Cruise control clean build" /> 
+  
+</project>

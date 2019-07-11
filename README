@@ -1,0 +1,51 @@
+Skeletonizer Version 1.0.0
+
+This document contains a quick guide to get you started using the Skeltonizer utility. For
+more complete documentation (background, techical info, etc) see the Skeletonizer User 
+Guide located in the doc directory of the installation.
+
+Installation:
+
+The skeletonizer can be run in any 1 of 2 ways.
+
+1. From the command line.
+2. As an extension to a preexisting JUMP workbench installation.
+
+
+1. In the root directory of the skeletonizer installation are a number of scripts for 
+   running utility from the command line.
+   
+   
+   skeletonizer.bat	(batch mode windows platforms)
+   skeletonizer.sh  (batch mode unix platforms)
+   skeletonizer_gui.bat (gui mode windows platforms)
+   skeletonizer_gui.sh  (gui mode unix platforms)
+   
+   The batch mode scripts take 5 arguments:
+   
+   1. Path to the point input shape file.
+   2. Path to the polygon input shape file.
+   3. Path to the skeleton output shape file.
+   4. Path to the report output text file.
+   5. Path to the bad polygon output shape file.
+   
+   The gui mode scripts do not take any arguments and will start the JUMP workbench 
+   upon invocation.
+   
+2. The relevant files are:
+   
+   The extension jar itself: 
+   
+   <skeletonizer root>/lib/skeletonizer.jar
+   
+   And the support libraries:
+   
+   <skeletonizer root>/lib/graph.jar
+   <skeletonizer root>/lib/network.jar
+   <skeletonizer root>/lib/utilities.jar
+
+   All the above files should be copied into the extension directory of your JUMP 
+   installation. See JUMP user guide for more information.
+   
+   Note: This version of the skeletonizer was built and tested against JUMP 1.1.2.
+   

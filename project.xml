@@ -1,0 +1,18 @@
+<project>
+
+	<extend>${basedir}/../../project.xml</extend>
+	<id>skeletonizer</id>
+	<name>skeletonizer</name>
+
+	<dependencies>
+		<dependency>
+			<id>utilities</id>
+			<version>1.0</version>
+		</dependency>
+		<dependency>
+			<id>graph</id>
+			<version>1.0</version>
+		</dependency>
+	</dependencies>
+
+</project>
